@@ -68,7 +68,7 @@ const createPaymentIntent = async (req, res) => {
         const intent = await stripe.paymentIntents.create({
             amount,
             currency: 'usd',
-            payment_method_types: ['card'],
+            automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
             description: `Application for ${scholarship.scholarshipName}`,
             metadata: {
                 scholarshipId: String(scholarship._id),
