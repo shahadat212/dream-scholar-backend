@@ -18,6 +18,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        res.status(503).send({ message: 'The database is not available right now. Please try again shortly.' });
+    }
+});
+
 app.use('/', authRoutes);
 app.use('/users', userRoutes);
 app.use('/scholarships', scholarshipRoutes);
@@ -41,13 +50,17 @@ app.use((err, req, res, next) => {
     res.status(500).send({ message: 'Something went wrong on the server' });
 });
 
-connectDB()
-    .then(() => {
-        app.listen(port, () => {
-            console.log(`Server running on port: ${port}`);
+if (require.main === module) {
+    connectDB()
+        .then(() => {
+            app.listen(port, () => {
+                console.log(`Server running on port: ${port}`);
+            });
+        })
+        .catch((error) => {
+            console.error('Failed to connect to the database:', error.message);
+            process.exit(1);
         });
-    })
-    .catch((error) => {
-        console.error('Failed to connect to the database:', error.message);
-        process.exit(1);
-    });
+}
+
+module.exports = app;

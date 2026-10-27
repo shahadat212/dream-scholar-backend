@@ -10,6 +10,7 @@ const client = new MongoClient(getMongoUri(), {
 });
 
 let db;
+let connecting;
 
 const ensureIndexes = async (database) => {
     const indexes = [
@@ -32,11 +33,20 @@ const ensureIndexes = async (database) => {
 
 const connectDB = async () => {
     if (db) return db;
-    await client.connect();
-    db = client.db('scholarDB');
-    console.log('Connected to MongoDB');
-    await ensureIndexes(db);
-    return db;
+    if (!connecting) {
+        connecting = (async () => {
+            await client.connect();
+            const database = client.db('scholarDB');
+            console.log('Connected to MongoDB');
+            await ensureIndexes(database);
+            db = database;
+            return db;
+        })().catch((error) => {
+            connecting = null;
+            throw error;
+        });
+    }
+    return connecting;
 };
 
 const getDB = () => {
