@@ -6,7 +6,10 @@ const paymentsCollection = () => getDB().collection('payments');
 const scholarshipsCollection = () => getDB().collection('scholarships');
 const applicationsCollection = () => getDB().collection('applications');
 
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+const stripeSecretKey = (process.env.STRIPE_SECRET_KEY || '').trim().replace(/^['"]|['"]$/g, '');
+const stripe = stripeSecretKey ? new Stripe(stripeSecretKey) : null;
+
+const isStripeError = (error) => typeof error?.type === 'string' && error.type.startsWith('Stripe');
 const STRIPE_MINIMUM_CENTS = 50;
 
 const todayString = () => new Date().toISOString().split('T')[0];
@@ -75,6 +78,11 @@ const createPaymentIntent = async (req, res) => {
 
         res.send({ clientSecret: intent.client_secret, amount: amount / 100 });
     } catch (error) {
+        if (isStripeError(error)) {
+            console.error('Stripe could not create a payment intent:', error.type, error.message);
+            return res.status(502).send({ message: `Payment provider error: ${error.message}` });
+        }
+        console.error('Payment intent failed:', error?.message);
         res.status(500).send({ message: 'Could not start the payment' });
     }
 };
