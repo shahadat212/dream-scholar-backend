@@ -19,6 +19,19 @@ const createNotification = async ({ userEmail, title, message, link }) => {
     }
 };
 
+const notifyStaff = async ({ title, message, link }) => {
+    try {
+        const staff = await getDB().collection('users').find({ role: { $in: ['admin', 'moderator'] } }).toArray();
+        const createdAt = new Date().toISOString();
+        const docs = staff
+            .filter((member) => member?.email)
+            .map((member) => ({ userEmail: member.email, title, message, link: link || null, read: false, createdAt }));
+        if (docs.length) await notificationsCollection().insertMany(docs);
+    } catch (error) {
+        return null;
+    }
+};
+
 const getMyNotifications = async (req, res) => {
     const email = req.decoded.email;
 
@@ -68,6 +81,7 @@ const markAllNotificationsRead = async (req, res) => {
 
 module.exports = {
     createNotification,
+    notifyStaff,
     getMyNotifications,
     markNotificationRead,
     markAllNotificationsRead,

@@ -5,6 +5,7 @@ const {
     getAllApplications,
     getApplicationsByEmail,
     getApplicationById,
+    validateApplication,
     createApplication,
     updateApplication,
     bulkUpdateStatus,
@@ -16,6 +17,7 @@ const router = express.Router();
 router.get('/', verifyToken, verifyAdminOrModerator, getAllApplications);
 router.get('/email/:email', verifyToken, getApplicationsByEmail);
 router.get('/:id', verifyToken, getApplicationById);
+router.post('/validate', verifyToken, validateApplication);
 router.post('/', verifyToken, createApplication);
 router.patch('/bulk/status', verifyToken, verifyAdminOrModerator, bulkUpdateStatus);
 router.patch('/:id', verifyToken, updateApplication);
